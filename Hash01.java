@@ -7,10 +7,14 @@ import java.util.Scanner;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.security.SecureRandom;
 
 public class Hash01 {
 
     static Scanner sc = new Scanner(System.in);
+    static Map<String, String[]> usuaris = new HashMap<>();
 
     public static void main(String[] args)
             throws NoSuchAlgorithmException, IOException {
@@ -36,10 +40,13 @@ public class Hash01 {
                     ex2();
                     break;
                 case 3:
+                    ex3();
                     break;
                 case 4:
+                    ex4();
                     break;
                 case 5:
+                    ex5();
                     break;
                 case 6:
                     seguirMenu = sortirMenu();
@@ -156,6 +163,84 @@ public class Hash01 {
         } else {
             System.out.println("S'ha detectat una modificació del missatge.");
         }
+        System.out.println("Prem Enter per tornar al menú...");
+        sc.nextLine();
+    }
+
+    public static void ex3() throws NoSuchAlgorithmException, IOException {
+        // Demanem l'usuari i contrasenya
+        System.out.print("Nom d'usuari: ");
+        String nomUsuari = llegirString();
+
+        System.out.print("Contrasenya: ");
+        String contrasenya = llegirString();
+
+        // Generem la salt aleatòria i la passem a hexadecimal
+        byte[] saltBytes = new byte[16];
+        new SecureRandom().nextBytes(saltBytes);
+        String salt = HexFormat.of().formatHex(saltBytes);
+
+        // Calcluem la contrasenya amb la salt
+        String contrasenyaAmbSalt = salt + contrasenya;
+
+        // Calculem el hash amb la salt
+        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = sha256.digest(contrasenyaAmbSalt.getBytes(StandardCharsets.UTF_8));
+        String hash = HexFormat.of().formatHex(hashBytes);
+
+        // Guardem la salt i el hash al mapa
+        usuaris.put(nomUsuari, new String[] { salt, hash });
+
+        System.out.println("Usuari registrat correctament.");
+
+        System.out.println("Prem Enter per tornar al menú...");
+        sc.nextLine();
+    }
+
+    public static void ex4() throws NoSuchAlgorithmException, IOException {
+
+        // Demanem l'usuari i la contrasenya
+        System.out.print("Nom d'usuari: ");
+        String nomUsuari = llegirString();
+
+        System.out.print("Contrasenya: ");
+        String contrasenya = llegirString();
+
+        // Comprovem si existeix en el mapa
+        if (!usuaris.containsKey(nomUsuari)) {
+            System.out.println("Error, aquest usuari no està registrat");
+            return; // Amb aquest return podem fer que en cas de que no existeixi l'usuari,
+                    // finalitzi directament el metode de ex4 i et torni al menú inicial
+        }
+
+        // Guardem la informacio a un String de dades (0 és la salt i 1 és el hash)
+        String[] dadesUsuari = usuaris.get(nomUsuari);
+        String salt = dadesUsuari[0];
+        String hashGuardat = dadesUsuari[1];
+
+        // Calculem el hash de la contrasenya introduïda amb la salt guardada i el
+        // passem a hexadecimal
+        String contrasenyaAmbSalt = salt + contrasenya;
+        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = sha256.digest(
+                contrasenyaAmbSalt.getBytes(StandardCharsets.UTF_8));
+        String hashCalculat = HexFormat.of().formatHex(hashBytes);
+
+        // Comparem el hash calculat amb el hash guardat
+        if (hashCalculat.equals(hashGuardat)) {
+            System.out.println("Accés correcte (Els hashes coincideixen)");
+        } else {
+            System.out.println("Accés incorrecte (Els hashes NO coincideixen)");
+        }
+        System.out.println("Prem Enter per tornar al menú...");
+        sc.nextLine();
+    }
+
+    public static void ex5() {
+        System.out.println("Per poder veure l'ex5, has de mirar el pdf adjunt a la carpeta 'Documentació'");
+
+        System.out.println("Prem Enter per tornar al menú...");
+        sc.nextLine();
     }
 
     public static String llegirString() {
